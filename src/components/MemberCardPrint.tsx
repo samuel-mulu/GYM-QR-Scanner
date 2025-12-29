@@ -15,7 +15,8 @@ export interface Member {
 function cardHtml(member: Member | null, token: string) {
   const fullName = member ? `${member.firstName || ""} ${member.lastName || ""}`.trim() : "Member Name";
   const photoUrl = member?.photoUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='400'><rect width='100%' height='100%' fill='%23ddd'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='24'>Photo</text></svg>";
-  const qrUrl = `https://gym-3efc3.web.app/scan/${token}`;
+  const base = (typeof window !== "undefined" && window.location?.origin) || process.env.NEXT_PUBLIC_BASE_URL || "https://gym-qr-scanner.vercel.app";
+  const qrUrl = `${base.replace(/\/$/, "")}/scan/${token}`;
   const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(qrUrl)}`;
 
   return `
@@ -149,7 +150,7 @@ export const MemberCardPreview: React.FC<{ member?: Member | null; token?: strin
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
             <div style={{ fontWeight: 700 }}>{fullName.split(" ")[0] || "Member"}</div>
             <div style={{ width: "18mm", height: "18mm", background: "#fff", padding: 4 }}>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(`https://gym-3efc3.web.app/scan/${token}`)}`} alt="qr" style={{ width: "100%", height: "100%" }} />
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(((typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_BASE_URL) || 'https://gym-qr-scanner.vercel.app').replace(/\/$/, '') + '/scan/' + token)}`} alt="qr" style={{ width: "100%", height: "100%" }} />
             </div>
           </div>
         </div>

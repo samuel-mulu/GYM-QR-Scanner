@@ -1,6 +1,6 @@
+import PrintButton from "@/components/PrintButton"; // adjust path if needed
 import { db } from "@/lib/firebase";
 import { get, ref } from "firebase/database";
-import PrintButton from "@/components/PrintButton"; // adjust path if needed
 
 interface PageProps {
   params: Promise<{
@@ -39,7 +39,8 @@ export default async function ScanPage({ params }: PageProps) {
     remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  const qrUrl = `https://gym-3efc3.web.app/scan/${memberId}`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://gym-qr-scanner.vercel.app";
+  const qrUrl = `${baseUrl.replace(/\/$/, "")}/scan/${memberId}`;
 
   return (
     <main style={{ padding: 20, maxWidth: 400, margin: "auto", fontFamily: "Arial, sans-serif" }}>
