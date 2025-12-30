@@ -102,7 +102,7 @@ export default function GymMemberCard({
 
         /* ---------- Card ---------- */
         .gym-card {
-          width: 4.375in;
+          width: 3.375in;
           height: 2.125in;
           background: #fff;
           border: 2px solid #000;
@@ -114,7 +114,7 @@ export default function GymMemberCard({
           justify-content: space-between;
 
           /* 🔥 SCALE UP FOR MOBILE */
-          transform: scale(1.4);
+          transform: scale(1.2);
           transform-origin: top center;
         }
 
@@ -150,11 +150,11 @@ export default function GymMemberCard({
         }
 
         .member-info {
-          font-size: 10px;
+          font-size: 13px;
         }
 
         .member-info .name {
-          font-size: 12px;
+          font-size: 18px;
           font-weight: bold;
           margin-bottom: 4px;
         }
@@ -162,8 +162,8 @@ export default function GymMemberCard({
         .row {
           display: grid;
           grid-template-columns: 36px auto;
-          gap: 4px;
-          line-height: 1.3;
+          gap: 8px;
+          line-height: 1.4;
         }
 
         /* ---------- QR ---------- */
@@ -173,8 +173,8 @@ export default function GymMemberCard({
         }
 
         .qr-box img {
-          width: 90px;
-          height: 90px;
+          width: 120px;
+          height: 110px;
         }
 
         /* ---------- Footer ---------- */
@@ -194,29 +194,44 @@ export default function GymMemberCard({
           background: #f7c5c5;
         }
 
-        /* ---------- PRINT ---------- */
-        @media print {
-          body * {
-            display: none !important;
-          }
+       /* ---------- PRINT (A4 SAFE, NO SPLIT) ---------- */
+@media print {
+  /* Hide everything except the card */
+  body * {
+    visibility: hidden !important;
+  }
 
-          .gym-card,
-          .gym-card * {
-            display: block !important;
-          }
+  .gym-card,
+  .gym-card * {
+    visibility: visible !important;
+  }
 
-          .gym-card {
-            transform: scale(1); /* 🔥 REAL SIZE */
-            position: absolute;
-            left: 0;
-            top: 0;
-          }
+  /* Center card on A4 and prevent splitting */
+  .gym-card {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
 
-          @page {
-            size: 3.375in 2.125in;
-            margin: 0;
-          }
-        }
+    /* CRITICAL: prevent page breaking */
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Force exactly ONE card per page */
+  .gym-card::after {
+    content: "";
+    display: block;
+    page-break-after: always;
+  }
+
+  /* A4 page, printer-friendly */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}
+
       `}</style>
     </>
   );
