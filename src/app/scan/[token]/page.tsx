@@ -2,6 +2,7 @@
 import GymMemberCard from "@/components/GymMemberCard";
 import PrintButton from "@/components/PrintButton";
 import { db } from "@/lib/firebase";
+import { ethiopianToGregorian } from "@/lib/ethiopian";
 import { get, ref } from "firebase/database";
 
 interface PageProps {
@@ -25,11 +26,12 @@ export default async function ScanPage({ params }: PageProps) {
 
   const member = memberSnap.val();
 
-  // Calculate remaining days
+  // Calculate remaining days (convert Ethiopian `registerDate` to Gregorian first)
+  const registerDate = member.registerDate ? ethiopianToGregorian(member.registerDate) : null;
   let remainingDays: number | null = null;
-  if (member.reRegisterDate && member.duration) {
+  if (registerDate && member.duration) {
     const months = parseInt(member.duration, 10);
-    const expiryDate = new Date(member.reRegisterDate);
+    const expiryDate = new Date(registerDate);
     expiryDate.setMonth(expiryDate.getMonth() + months);
 
     const today = new Date();
@@ -39,6 +41,7 @@ export default async function ScanPage({ params }: PageProps) {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://gym-qr-scanner.vercel.app";
   const qrUrl = `${baseUrl.replace(/\/$/, "")}/scan/${memberId}`;
+  const scannedQrUrl = qrUrl.includes("?") ? `${qrUrl}&scanned=1` : `${qrUrl}?scanned=1`;
 
   return (
     <main style={{ minHeight: "100vh", background: "#0f0f0f", padding: "40px 20px" }}>
@@ -65,7 +68,10 @@ export default async function ScanPage({ params }: PageProps) {
           profileImageUrl: member.profileImageUrl,
         }}
         remainingDays={remainingDays}
-        qrUrl={qrUrl}
+        remainingFromDb={member.remaining ?? null}
+        showRegisterDate={false}
+        registerDate={member.registerDate ?? null}
+        qrUrl={scannedQrUrl}
       />
 
       {/* Print Button Below Card */}

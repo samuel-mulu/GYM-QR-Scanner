@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 /**
  * GymMemberCard
@@ -18,21 +19,55 @@ interface GymMemberCardProps {
     profileImageUrl?: string;
   };
   remainingDays: number | null;
+  // numeric remaining value stored in DB (used after scan if present)
+  remainingFromDb?: number | null;
+  // when true, show the register date (Ethiopian) and hide price (pre-scan view)
+  showRegisterDate?: boolean;
+  registerDate?: string | null;
   qrUrl: string;
 }
 
 export default function GymMemberCard({
   member,
   remainingDays,
+  remainingFromDb = null,
+  showRegisterDate = false,
+  registerDate = null,
   qrUrl,
 }: GymMemberCardProps) {
-  const isActive = remainingDays === null || remainingDays > 0;
+  const [qrSrc, setQrSrc] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const api = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`;
+    // fetch the QR as a blob and convert to object URL to avoid cross-origin issues when capturing canvas
+    fetch(api)
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        setQrSrc(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrSrc(api);
+      });
+
+    return () => {
+      cancelled = true;
+      if (qrSrc) {
+        URL.revokeObjectURL(qrSrc);
+      }
+    };
+  }, [qrUrl]);
+  // prefer DB-provided remaining value when available (scanned state)
+  const usedRemaining = remainingFromDb !== undefined && remainingFromDb !== null ? remainingFromDb : remainingDays;
+  const isActive = usedRemaining === null || usedRemaining > 0;
 
   const remainingText =
-    remainingDays === null
+    usedRemaining === null
       ? "N/A"
-      : remainingDays > 0
-      ? `${remainingDays} DAYS LEFT`
+      : usedRemaining > 0
+      ? `${usedRemaining} DAYS LEFT`
       : "EXPIRED";
 
   const photoUrl =
@@ -67,20 +102,24 @@ export default function GymMemberCard({
                 <strong>{member.duration || "N/A"}</strong>
               </div>
 
-              <div className="row">
-                <span>Price</span>
-                <strong>{member.price ?? "N/A"}</strong>
-              </div>
+              {!showRegisterDate && (
+                <div className="row">
+                  <span>Price</span>
+                  <strong>{member.price ?? "N/A"}</strong>
+                </div>
+              )}
+
+              {showRegisterDate && (
+                <div className="row">
+                  <span>Register</span>
+                  <strong>{registerDate ?? "N/A"}</strong>
+                </div>
+              )}
             </div>
 
             {/* Bigger QR */}
             <div className="qr-box">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                  qrUrl
-                )}`}
-                alt="QR Code"
-              />
+              <img src={qrSrc || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`} alt="QR Code" />
             </div>
           </div>
 

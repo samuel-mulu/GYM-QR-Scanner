@@ -5,5 +5,5 @@ export interface Member {
   status?: string;
   duration?: string;
   price?: string | number;
-  reRegisterDate?: string | null;
+  registerDate?: string | null;
 }
