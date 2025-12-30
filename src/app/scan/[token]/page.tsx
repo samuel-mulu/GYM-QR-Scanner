@@ -59,20 +59,20 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
     <main
       style={{
         minHeight: "100vh",
-        background: "#0f0f0f",
+        background: isScanned ? "#f9fafb" : "#0f0f0f",
         padding: "40px 20px",
       }}
     >
       <h1
         style={{
           textAlign: "center",
-          color: "#00ff99",
+          color: isScanned ? "#1f2937" : "#00ff99",
           fontSize: "32px",
           marginBottom: "20px",
           fontWeight: "bold",
         }}
       >
-        Member Card Preview
+        {isScanned ? "Member Details" : "Member Card Preview"}
       </h1>
 
       {/* Card */}
@@ -92,8 +92,8 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
         isScanned={isScanned}
       />
 
-      {/* Print Button Below Card */}
-      <PrintButton />
+      {/* Print Button Only for Normal Endpoint */}
+      {!isScanned && <PrintButton />}
     </main>
   );
 }

@@ -88,10 +88,16 @@ export default function GymMemberCard({
               </div>
 
               {isScanned && (
-                <div className="row">
-                  <span>Price</span>
-                  <strong>{member.price ?? "N/A"}</strong>
-                </div>
+                <>
+                  <div className="row">
+                    <span>Price</span>
+                    <strong>{member.price ?? "N/A"}</strong>
+                  </div>
+                  <div className="row">
+                    <span>Remaining</span>
+                    <strong>{remainingFromDb !== null && remainingFromDb !== undefined ? remainingFromDb : "N/A"}</strong>
+                  </div>
+                </>
               )}
             </div>
 
@@ -109,10 +115,20 @@ export default function GymMemberCard({
           </div>
 
           {/* Footer */}
-          <div className={`card-footer ${isActive ? "active" : "expired"}`}>
-            {isScanned
-              ? `REMAINING: ${remainingText}`
-              : `REGISTER: ${formatEthiopianDate(registerDate)}`}
+          <div className={`card-footer ${isScanned && !isActive ? "expired-red" : isActive ? "active" : "expired"}`}>
+            {isScanned ? (
+              <div className="remaining-display">
+                {remainingDays === null ? (
+                  <span className="remaining-text">N/A</span>
+                ) : remainingDays > 0 ? (
+                  <span className="remaining-text remaining-active">{remainingDays} {remainingDays === 1 ? "day" : "days"} left</span>
+                ) : (
+                  <span className="remaining-text remaining-expired">EXPIRED</span>
+                )}
+              </div>
+            ) : (
+              `REGISTER: ${formatEthiopianDate(registerDate)}`
+            )}
           </div>
         </div>
       </div>
@@ -209,12 +225,45 @@ export default function GymMemberCard({
           border-top: 1px solid #000;
         }
 
+        .remaining-display {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .remaining-text {
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }
+
+        .remaining-active {
+          color: #2d5016;
+        }
+
+        .remaining-expired {
+          color: #ffffff;
+          background: #dc2626;
+          padding: 4px 12px;
+          border-radius: 4px;
+          text-transform: uppercase;
+          font-size: 11px;
+        }
+
         .active {
           background: #c8f7c5;
         }
 
         .expired {
           background: #f7c5c5;
+        }
+
+        .expired-red {
+          background: #fee2e2;
+        }
+
+        .expired-red {
+          background: #fee2e2;
         }
 
         /* ---------- PRINT (A4 SAFE) ---------- */
