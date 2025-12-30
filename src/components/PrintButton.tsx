@@ -1,28 +1,37 @@
-// src/components/PrintButton.tsx
 "use client";
 
 export default function PrintButton() {
   return (
-    <div style={{ textAlign: "center", marginTop: "40px" }}>
-      <button
-        onClick={() => window.print()}
-        style={{
-          padding: "14px 32px",
-          fontSize: "18px",
-          fontWeight: "bold",
-          cursor: "pointer",
-          borderRadius: "12px",
-          border: "none",
-          backgroundColor: "#00ff99",
-          color: "#000",
-          boxShadow: "0 4px 15px rgba(0, 255, 153, 0.4)",
-          transition: "all 0.3s ease",
-        }}
-        onMouseOver={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
-        onMouseOut={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-      >
+    <div className="print-actions">
+      <button onClick={() => window.print()}>
         🖨️ Print Member Card
       </button>
+
+      <style jsx>{`
+        .print-actions {
+          display: flex;
+          justify-content: center;
+          margin: 79px 0;
+        }
+
+        button {
+          padding: 14px 32px;
+          font-size: 18px;
+          font-weight: bold;
+          border-radius: 12px;
+          border: none;
+          cursor: pointer;
+          background: #00ff99;
+          color: #000;
+          box-shadow: 0 4px 15px rgba(0, 255, 153, 0.4);
+        }
+
+        @media print {
+          .print-actions {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
