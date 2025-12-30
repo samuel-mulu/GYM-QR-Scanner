@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * GymMemberCard
+ * ----------------------------
+ * - Front-side ID card only
+ * - Exact PVC card print size (3.375in x 2.125in)
+ * - Print button shown on screen, hidden during print
+ * - Tight label/value spacing for readability
+ */
+
 interface GymMemberCardProps {
   member: {
     firstName: string;
@@ -32,56 +41,78 @@ export default function GymMemberCard({
 
   return (
     <>
+      {/* ===== SCREEN-ONLY PRINT BUTTON ===== */}
+      <div className="print-actions">
+        <button onClick={() => window.print()}>Print Member Card</button>
+      </div>
+
+      {/* ===== FRONT CARD ONLY ===== */}
       <div className="gym-card">
         {/* Header */}
         <div className="card-header">
           <h1>GYM FITNESS CLUB</h1>
-          <span>Member ID Card</span>
         </div>
 
         {/* Body */}
         <div className="card-body">
-          <img className="member-photo" src={photoUrl} alt="Member" />
+          {/* Member Photo */}
+          <img className="member-photo" src={photoUrl} alt="Member Photo" />
 
+          {/* Member Details */}
           <div className="member-info">
             <div className="name">
               {member.firstName} {member.lastName}
             </div>
 
+            {/* Tight label/value layout */}
             <div className="row">
-              <span>Status:</span>
+              <span>Status</span>
               <strong>{member.status || "ACTIVE"}</strong>
             </div>
 
             <div className="row">
-              <span>Plan:</span>
+              <span>Plan</span>
               <strong>{member.duration || "N/A"}</strong>
             </div>
 
             <div className="row">
-              <span>Price:</span>
+              <span>Price</span>
               <strong>{member.price ?? "N/A"}</strong>
             </div>
           </div>
 
+          {/* Large QR Code for scanning */}
           <div className="qr-box">
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
                 qrUrl
               )}`}
-              alt="QR"
+              alt="QR Code"
             />
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer / Membership Status */}
         <div className={`card-footer ${isActive ? "active" : "expired"}`}>
           {remainingText}
         </div>
       </div>
 
-      {/* Styles */}
+      {/* ===== STYLES ===== */}
       <style jsx>{`
+        /* ---------- Screen Button ---------- */
+        .print-actions {
+          margin-bottom: 16px;
+          text-align: center;
+        }
+
+        .print-actions button {
+          padding: 8px 16px;
+          font-size: 14px;
+          cursor: pointer;
+        }
+
+        /* ---------- Card Base ---------- */
         .gym-card {
           width: 3.375in;
           height: 2.125in;
@@ -95,6 +126,7 @@ export default function GymMemberCard({
           justify-content: space-between;
         }
 
+        /* ---------- Header ---------- */
         .card-header {
           text-align: center;
           border-bottom: 1px solid #000;
@@ -108,19 +140,17 @@ export default function GymMemberCard({
           letter-spacing: 1px;
         }
 
-        .card-header span {
-          font-size: 10px;
-        }
-
+        /* ---------- Body Layout ---------- */
         .card-body {
           display: grid;
-          grid-template-columns: 1fr 2fr 1fr;
-          gap: 8px;
+          grid-template-columns: 60px 1fr 90px;
+          gap: 6px;
           align-items: center;
           flex: 1;
           margin-top: 6px;
         }
 
+        /* ---------- Photo ---------- */
         .member-photo {
           width: 60px;
           height: 60px;
@@ -129,6 +159,7 @@ export default function GymMemberCard({
           border: 1px solid #000;
         }
 
+        /* ---------- Member Info ---------- */
         .member-info {
           font-size: 10px;
         }
@@ -139,22 +170,35 @@ export default function GymMemberCard({
           margin-bottom: 4px;
         }
 
+        /* Tight label/value spacing */
         .row {
-          display: flex;
-          justify-content: space-between;
+          display: grid;
+          grid-template-columns: 40px auto;
+          gap: 4px;
+          line-height: 1.3;
         }
 
+        .row span {
+          font-weight: normal;
+        }
+
+        .row strong {
+          font-weight: bold;
+        }
+
+        /* ---------- QR ---------- */
         .qr-box {
-          background: #fff;
           border: 1px solid #000;
           padding: 2px;
         }
 
         .qr-box img {
-          width: 60px;
-          height: 60px;
+          width: 80px;
+          height: 80px;
+          display: block;
         }
 
+        /* ---------- Footer ---------- */
         .card-footer {
           text-align: center;
           font-size: 11px;
@@ -171,19 +215,30 @@ export default function GymMemberCard({
           background: #f7c5c5;
         }
 
+        /* ---------- PRINT RULES ---------- */
         @media print {
+          /* Hide everything except card */
           body * {
             visibility: hidden;
           }
+
           .gym-card,
           .gym-card * {
             visibility: visible;
           }
+
+          /* Hide print button */
+          .print-actions {
+            display: none;
+          }
+
+          /* Lock card position */
           .gym-card {
             position: absolute;
             left: 0;
             top: 0;
           }
+
           @page {
             size: 3.375in 2.125in;
             margin: 0;
