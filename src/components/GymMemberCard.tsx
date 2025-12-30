@@ -1,12 +1,12 @@
 "use client";
-import React from "react";
 
 /**
  * GymMemberCard
  * -----------------------------------
- * - Scales up on mobile
- * - Real size when printing
- * - Front card only
+ * - Before scan: QR visible
+ * - After scan: QR hidden, remaining shown
+ * - Mobile scaled
+ * - Print safe (A4, no split)
  */
 
 interface GymMemberCardProps {
@@ -19,12 +19,11 @@ interface GymMemberCardProps {
     profileImageUrl?: string;
   };
   remainingDays: number | null;
-  // numeric remaining value stored in DB (used after scan if present)
   remainingFromDb?: number | null;
-  // when true, show the register date (Ethiopian) and hide price (pre-scan view)
   showRegisterDate?: boolean;
   registerDate?: string | null;
   qrUrl: string;
+  isScanned?: boolean;
 }
 
 export default function GymMemberCard({
@@ -34,33 +33,13 @@ export default function GymMemberCard({
   showRegisterDate = false,
   registerDate = null,
   qrUrl,
+  isScanned = false,
 }: GymMemberCardProps) {
-  const [qrSrc, setQrSrc] = React.useState<string | null>(null);
+  const usedRemaining =
+    remainingFromDb !== null && remainingFromDb !== undefined
+      ? remainingFromDb
+      : remainingDays;
 
-  React.useEffect(() => {
-    let cancelled = false;
-    const api = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`;
-    // fetch the QR as a blob and convert to object URL to avoid cross-origin issues when capturing canvas
-    fetch(api)
-      .then((res) => res.blob())
-      .then((blob) => {
-        if (cancelled) return;
-        const url = URL.createObjectURL(blob);
-        setQrSrc(url);
-      })
-      .catch(() => {
-        if (!cancelled) setQrSrc(api);
-      });
-
-    return () => {
-      cancelled = true;
-      if (qrSrc) {
-        URL.revokeObjectURL(qrSrc);
-      }
-    };
-  }, [qrUrl]);
-  // prefer DB-provided remaining value when available (scanned state)
-  const usedRemaining = remainingFromDb !== undefined && remainingFromDb !== null ? remainingFromDb : remainingDays;
   const isActive = usedRemaining === null || usedRemaining > 0;
 
   const remainingText =
@@ -71,11 +50,11 @@ export default function GymMemberCard({
       : "EXPIRED";
 
   const photoUrl =
-    member.profileImageUrl || "https://via.placeholder.com/120x120?text=Photo";
+    member.profileImageUrl ||
+    "https://via.placeholder.com/120x120?text=Photo";
 
   return (
     <>
-      {/* ===== SCREEN WRAPPER (centers & scales card) ===== */}
       <div className="card-screen-wrapper">
         <div className="gym-card">
           {/* Header */}
@@ -85,7 +64,7 @@ export default function GymMemberCard({
 
           {/* Body */}
           <div className="card-body">
-            <img className="member-photo" src={photoUrl} alt="Member" />    
+            <img className="member-photo" src={photoUrl} alt="Member" />
 
             <div className="member-info">
               <div className="name">
@@ -117,29 +96,33 @@ export default function GymMemberCard({
               )}
             </div>
 
-            {/* Bigger QR */}
-            <div className="qr-box">
-              <img src={qrSrc || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`} alt="QR Code" />
-            </div>
+            {/* 🔥 QR ONLY BEFORE SCAN */}
+            {!isScanned && (
+              <div className="qr-box">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                    qrUrl
+                  )}`}
+                  alt="QR Code"
+                />
+              </div>
+            )}
           </div>
 
           {/* Footer */}
           <div className={`card-footer ${isActive ? "active" : "expired"}`}>
-            {remainingText}
+            {isScanned ? `REMAINING: ${remainingText}` : remainingText}
           </div>
         </div>
       </div>
 
-      {/* ===== STYLES ===== */}
       <style jsx>{`
-        /* ---------- Screen Wrapper ---------- */
         .card-screen-wrapper {
           display: flex;
           justify-content: center;
           padding: 32px 16px;
         }
 
-        /* ---------- Card ---------- */
         .gym-card {
           width: 3.375in;
           height: 2.125in;
@@ -152,12 +135,10 @@ export default function GymMemberCard({
           flex-direction: column;
           justify-content: space-between;
 
-          /* 🔥 SCALE UP FOR MOBILE */
           transform: scale(1.2);
           transform-origin: top center;
         }
 
-        /* ---------- Header ---------- */
         .card-header {
           text-align: center;
           border-bottom: 1px solid #000;
@@ -170,10 +151,9 @@ export default function GymMemberCard({
           letter-spacing: 1px;
         }
 
-        /* ---------- Body ---------- */
         .card-body {
           display: grid;
-          grid-template-columns: 60px 1fr 100px;
+          grid-template-columns: 60px 1fr ${isScanned ? "0px" : "100px"};
           gap: 6px;
           align-items: center;
           flex: 1;
@@ -195,28 +175,19 @@ export default function GymMemberCard({
         .member-info .name {
           font-size: 18px;
           font-weight: bold;
-          margin-bottom: 4px;
         }
 
         .row {
           display: grid;
-          grid-template-columns: 36px auto;
-          gap: 8px;
-          line-height: 1.4;
-        }
-
-        /* ---------- QR ---------- */
-        .qr-box {
-          border: 1px solid #000;
-          padding: 2px;
+          grid-template-columns: 40px auto;
+          gap: 6px;
         }
 
         .qr-box img {
-          width: 120px;
+          width: 110px;
           height: 110px;
         }
 
-        /* ---------- Footer ---------- */
         .card-footer {
           text-align: center;
           font-size: 11px;
@@ -233,44 +204,30 @@ export default function GymMemberCard({
           background: #f7c5c5;
         }
 
-       /* ---------- PRINT (A4 SAFE, NO SPLIT) ---------- */
-@media print {
-  /* Hide everything except the card */
-  body * {
-    visibility: hidden !important;
-  }
+        /* ---------- PRINT (A4 SAFE) ---------- */
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
 
-  .gym-card,
-  .gym-card * {
-    visibility: visible !important;
-  }
+          .gym-card,
+          .gym-card * {
+            visibility: visible !important;
+          }
 
-  /* Center card on A4 and prevent splitting */
-  .gym-card {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%) scale(1);
+          .gym-card {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            page-break-inside: avoid;
+          }
 
-    /* CRITICAL: prevent page breaking */
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  /* Force exactly ONE card per page */
-  .gym-card::after {
-    content: "";
-    display: block;
-    page-break-after: always;
-  }
-
-  /* A4 page, printer-friendly */
-  @page {
-    size: A4;
-    margin: 0;
-  }
-}
-
+          @page {
+            size: A4;
+            margin: 0;
+          }
+        }
       `}</style>
     </>
   );
