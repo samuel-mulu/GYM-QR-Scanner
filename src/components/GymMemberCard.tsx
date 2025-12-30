@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { formatEthiopianDate } from "@/lib/ethiopian";
+
 /**
  * GymMemberCard
  * -----------------------------------
@@ -20,7 +23,6 @@ interface GymMemberCardProps {
   };
   remainingDays: number | null;
   remainingFromDb?: number | null;
-  showRegisterDate?: boolean;
   registerDate?: string | null;
   qrUrl: string;
   isScanned?: boolean;
@@ -30,7 +32,6 @@ export default function GymMemberCard({
   member,
   remainingDays,
   remainingFromDb = null,
-  showRegisterDate = false,
   registerDate = null,
   qrUrl,
   isScanned = false,
@@ -49,9 +50,8 @@ export default function GymMemberCard({
       ? `${usedRemaining} DAYS LEFT`
       : "EXPIRED";
 
-  const photoUrl =
-    member.profileImageUrl ||
-    "https://via.placeholder.com/120x120?text=Photo";
+  const [imageError, setImageError] = useState(false);
+  const hasImage = member.profileImageUrl && !imageError;
 
   return (
     <>
@@ -64,7 +64,18 @@ export default function GymMemberCard({
 
           {/* Body */}
           <div className="card-body">
-            <img className="member-photo" src={photoUrl} alt="Member" />
+            {hasImage ? (
+              <img
+                className="member-photo"
+                src={member.profileImageUrl}
+                alt="Member"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="member-photo member-photo-placeholder">
+                NO PHOTO
+              </div>
+            )}
 
             <div className="member-info">
               <div className="name">
@@ -72,26 +83,14 @@ export default function GymMemberCard({
               </div>
 
               <div className="row">
-                <span>Status</span>
-                <strong>{member.status || "ACTIVE"}</strong>
-              </div>
-
-              <div className="row">
                 <span>Plan</span>
                 <strong>{member.duration || "N/A"}</strong>
               </div>
 
-              {!showRegisterDate && (
+              {isScanned && (
                 <div className="row">
                   <span>Price</span>
                   <strong>{member.price ?? "N/A"}</strong>
-                </div>
-              )}
-
-              {showRegisterDate && (
-                <div className="row">
-                  <span>Register</span>
-                  <strong>{registerDate ?? "N/A"}</strong>
                 </div>
               )}
             </div>
@@ -111,7 +110,9 @@ export default function GymMemberCard({
 
           {/* Footer */}
           <div className={`card-footer ${isActive ? "active" : "expired"}`}>
-            {isScanned ? `REMAINING: ${remainingText}` : remainingText}
+            {isScanned
+              ? `REMAINING: ${remainingText}`
+              : `REGISTER: ${formatEthiopianDate(registerDate)}`}
           </div>
         </div>
       </div>
@@ -166,6 +167,18 @@ export default function GymMemberCard({
           border-radius: 50%;
           object-fit: cover;
           border: 1px solid #000;
+        }
+
+        .member-photo-placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f0f0f0;
+          color: #666;
+          font-size: 10px;
+          font-weight: bold;
+          text-align: center;
+          line-height: 1.1;
         }
 
         .member-info {

@@ -41,3 +41,43 @@ export function parseEthiopianDateToIso(ethiopianDate: string): string {
   const d = ethiopianToGregorian(ethiopianDate);
   return d.toISOString();
 }
+
+// Ethiopian month names
+const ETHIOPIAN_MONTHS = [
+  "መስከረም", // 1 - Meskerem
+  "ጥቅምት", // 2 - Tikimt
+  "ህዳር", // 3 - Hidar
+  "ታህሳስ", // 4 - Tahsas
+  "ጥር", // 5 - Tir
+  "የካቲት", // 6 - Yekatit
+  "መጋቢት", // 7 - Megabit
+  "ሚያዝያ", // 8 - Miyazya
+  "ግንቦት", // 9 - Ginbot
+  "ሰኔ", // 10 - Sene
+  "ሐምሌ", // 11 - Hamle
+  "ነሐሴ", // 12 - Nehase
+];
+
+/**
+ * Formats Ethiopian date string (YYYY-MM-DD) to YYYY-{EthiopianMonth}-DD
+ * @param ethiopianDate - Ethiopian date string in YYYY-MM-DD format (or ISO string)
+ * @returns Formatted date string with Ethiopian month name
+ */
+export function formatEthiopianDate(ethiopianDate: string | null): string {
+  if (!ethiopianDate) return "N/A";
+  
+  // Remove time portion if it exists (handles ISO format like "2018-03-10T00:00:00.000")
+  const dateOnly = ethiopianDate.split("T")[0];
+  
+  const parts = dateOnly.split("-");
+  if (parts.length < 3) return ethiopianDate;
+  
+  const year = parts[0];
+  const monthNum = parseInt(parts[1], 10);
+  const day = parts[2];
+  
+  if (monthNum < 1 || monthNum > 12) return ethiopianDate;
+  
+  const monthName = ETHIOPIAN_MONTHS[monthNum - 1];
+  return `${year}-${monthName}-${day}`;
+}

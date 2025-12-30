@@ -87,7 +87,6 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
         }}
         remainingDays={remainingDays}
         remainingFromDb={member.remaining ?? null}
-        showRegisterDate={false}
         registerDate={member.registerDate ?? null}
         qrUrl={qrUrl}
         isScanned={isScanned}
