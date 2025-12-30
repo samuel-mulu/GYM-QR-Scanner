@@ -1,24 +1,23 @@
-import PrintButton from "@/components/PrintButton"; // adjust path if needed
+// src/app/scan/[token]/page.tsx
+import GymMemberCard from "@/components/GymMemberCard";
+import PrintButton from "@/components/PrintButton";
 import { db } from "@/lib/firebase";
 import { get, ref } from "firebase/database";
 
 interface PageProps {
-  params: Promise<{
-    token: string;
-  }>;
+  params: Promise<{ token: string }>;
 }
 
 export default async function ScanPage({ params }: PageProps) {
-  const awaitedParams = await params;
-  const memberId = awaitedParams.token;
+  const { token: memberId } = await params;
 
   const memberRef = ref(db, `members/${memberId}`);
   const memberSnap = await get(memberRef);
 
   if (!memberSnap.exists()) {
     return (
-      <main style={{ padding: 20 }}>
-        <h1>Member Not Found</h1>
+      <main style={{ padding: 40, textAlign: "center", fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+        <h1 style={{ fontSize: "32px", color: "#ff4444" }}>Member Not Found</h1>
         <p>No member found with this ID.</p>
       </main>
     );
@@ -26,12 +25,11 @@ export default async function ScanPage({ params }: PageProps) {
 
   const member = memberSnap.val();
 
-  const reRegisterDate = member.reRegisterDate ? new Date(member.reRegisterDate) : null;
-  let remainingDays = null;
-
-  if (reRegisterDate && member.duration) {
-    const months = parseInt(member.duration);
-    const expiryDate = new Date(reRegisterDate);
+  // Calculate remaining days
+  let remainingDays: number | null = null;
+  if (member.reRegisterDate && member.duration) {
+    const months = parseInt(member.duration, 10);
+    const expiryDate = new Date(member.reRegisterDate);
     expiryDate.setMonth(expiryDate.getMonth() + months);
 
     const today = new Date();
@@ -43,41 +41,35 @@ export default async function ScanPage({ params }: PageProps) {
   const qrUrl = `${baseUrl.replace(/\/$/, "")}/scan/${memberId}`;
 
   return (
-    <main style={{ padding: 20, maxWidth: 400, margin: "auto", fontFamily: "Arial, sans-serif" }}>
-      <h1 style={{ textAlign: "center" }}>Member Status</h1>
-
-      <div
+    <main style={{ minHeight: "100vh", background: "#0f0f0f", padding: "40px 20px" }}>
+      <h1
         style={{
-          border: "1px solid #ccc",
-          borderRadius: 10,
-          padding: 20,
-          boxShadow: "0 0 10px rgba(0,0,0,0.1)",
           textAlign: "center",
+          color: "#00ff99",
+          fontSize: "32px",
+          marginBottom: "20px",
+          fontWeight: "bold",
         }}
       >
-        <h2>
-          {member.firstName} {member.lastName}
-        </h2>
-        <p><strong>Status:</strong> {member.status || "N/A"}</p>
-        <p><strong>Duration:</strong> {member.duration || "N/A"}</p>
-        <p><strong>Price:</strong> {member.price ? `$${member.price}` : "N/A"}</p>
+        Member Card Preview
+      </h1>
 
-        <p style={{ fontSize: 18, fontWeight: "bold", marginTop: 20 }}>
-          {remainingDays === null
-            ? "Remaining days: N/A"
-            : remainingDays > 0
-            ? `Remaining days: ${remainingDays}`
-            : "Membership expired"}
-        </p>
+      {/* Card */}
+      <GymMemberCard
+        member={{
+          firstName: member.firstName || "N/A",
+          lastName: member.lastName || "",
+          status: member.status,
+          duration: member.duration,
+          price: member.price,
+          profileImageUrl: member.profileImageUrl,
+        }}
+        remainingDays={remainingDays}
+        qrUrl={qrUrl}
+      />
 
-        <img
-          src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`}
-          alt="QR Code"
-          style={{ marginTop: 20 }}
-        />
-
-        <PrintButton />
-      </div>
+      {/* Print Button Below Card */}
+      <PrintButton />
     </main>
   );
 }

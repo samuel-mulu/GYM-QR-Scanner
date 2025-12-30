@@ -1,31 +1,28 @@
+// src/components/PrintButton.tsx
 "use client";
 
-import { printMemberCard } from "./MemberCardPrint";
-
-export default function PrintButton({ member, token }: { member?: any; token?: string }) {
-  const handlePrint = () => {
-    if (member && token) {
-      printMemberCard(member, token);
-    } else {
-      window.print();
-    }
-  };
-
+export default function PrintButton() {
   return (
-    <button
-      onClick={handlePrint}
-      style={{
-        marginTop: 30,
-        padding: "10px 20px",
-        fontSize: 16,
-        cursor: "pointer",
-        borderRadius: 5,
-        border: "none",
-        backgroundColor: "#0070f3",
-        color: "white",
-      }}
-    >
-      Print Card
-    </button>
+    <div style={{ textAlign: "center", marginTop: "40px" }}>
+      <button
+        onClick={() => window.print()}
+        style={{
+          padding: "14px 32px",
+          fontSize: "18px",
+          fontWeight: "bold",
+          cursor: "pointer",
+          borderRadius: "12px",
+          border: "none",
+          backgroundColor: "#00ff99",
+          color: "#000",
+          boxShadow: "0 4px 15px rgba(0, 255, 153, 0.4)",
+          transition: "all 0.3s ease",
+        }}
+        onMouseOver={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
+        onMouseOut={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+      >
+        🖨️ Print Member Card
+      </button>
+    </div>
   );
 }
