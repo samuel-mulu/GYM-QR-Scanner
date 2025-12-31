@@ -79,7 +79,8 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
 
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || "https://gym-qr-scanner.vercel.app";
-  // QR URL should point to the scanned version (with ?scanned=1)
+  // QR URL should point directly to the scanned version (with ?scanned=1)
+  // When scanned, it will automatically show the scanned view
   const qrUrl = `${baseUrl.replace(/\/$/, "")}/scan/${memberId}?scanned=1`;
 
   return (
