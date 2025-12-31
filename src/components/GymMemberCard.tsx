@@ -208,7 +208,7 @@ export default function GymMemberCard({
 
         .row {
           display: grid;
-          grid-template-columns: 40px auto;
+          grid-template-columns: 70px auto;
           gap: 6px;
           align-items: center;
         }
