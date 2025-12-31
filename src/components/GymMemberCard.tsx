@@ -95,7 +95,7 @@ export default function GymMemberCard({
                   </div>
                   <div className="row">
                     <span>Remaining</span>
-                    <strong>{remainingFromDb !== null && remainingFromDb !== undefined ? remainingFromDb : "N/A"}</strong>
+                    <strong className="remaining-value">{remainingFromDb !== null && remainingFromDb !== undefined ? remainingFromDb : "N/A"}</strong>
                   </div>
                 </>
               )}
@@ -210,6 +210,12 @@ export default function GymMemberCard({
           display: grid;
           grid-template-columns: 40px auto;
           gap: 6px;
+          align-items: center;
+        }
+
+        .remaining-value {
+          word-break: break-word;
+          overflow-wrap: break-word;
         }
 
         .qr-box img {

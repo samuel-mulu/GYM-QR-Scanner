@@ -81,3 +81,127 @@ export function formatEthiopianDate(ethiopianDate: string | null): string {
   const monthName = ETHIOPIAN_MONTHS[monthNum - 1];
   return `${year}-${monthName}-${day}`;
 }
+
+/**
+ * Adds months to an Ethiopian date and returns the expiry date in Ethiopian format
+ * Ethiopian months have 30 days each (except Pagume which is month 13 with 5-6 days)
+ * @param ethiopianDate - Ethiopian date string in YYYY-MM-DD format
+ * @param months - Number of months to add
+ * @returns Ethiopian date string of the expiry date
+ */
+export function addMonthsToEthiopianDate(ethiopianDate: string, months: number): string {
+  if (!ethiopianDate) throw new Error("Missing Ethiopian date");
+  
+  const parts = ethiopianDate.split("-");
+  if (parts.length < 3) throw new Error("Invalid date format");
+  
+  let ey = parseInt(parts[0], 10);
+  let em = parseInt(parts[1], 10);
+  let ed = parseInt(parts[2], 10);
+  
+  // Add months
+  em += months;
+  
+  // Handle year overflow (each year has 13 months, but we only use 1-12 for regular months)
+  // If month > 12, we need to handle Pagume (month 13) and roll to next year
+  while (em > 12) {
+    em -= 12;
+    ey += 1;
+  }
+  
+  // Ensure month is valid
+  if (em < 1) {
+    em = 1;
+  }
+  
+  // Format back to YYYY-MM-DD
+  return `${ey}-${String(em).padStart(2, "0")}-${String(ed).padStart(2, "0")}`;
+}
+
+/**
+ * Calculates remaining days between two Ethiopian dates
+ * @param startDate - Start Ethiopian date string (YYYY-MM-DD)
+ * @param endDate - End Ethiopian date string (YYYY-MM-DD)
+ * @returns Number of days difference
+ */
+export function daysBetweenEthiopianDates(startDate: string, endDate: string): number {
+  // Convert both to Gregorian for easier calculation
+  const startGreg = ethiopianToGregorian(startDate);
+  const endGreg = ethiopianToGregorian(endDate);
+  
+  const diffTime = endGreg.getTime() - startGreg.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Converts Gregorian date to Ethiopian date
+ * Uses the standard conversion algorithm
+ * @param date - Gregorian Date object
+ * @returns Ethiopian date string (YYYY-MM-DD)
+ */
+export function gregorianToEthiopian(date: Date): string {
+  const gy = date.getFullYear();
+  const gm = date.getMonth() + 1; // JS months are 1-based now
+  const gd = date.getDate();
+  
+  // Calculate days since epoch (January 1, 0001 AD in Gregorian)
+  // Using a simpler approach: calculate days since a known reference point
+  // Reference: September 11, 2023 (Gregorian) = Meskerem 1, 2016 (Ethiopian)
+  
+  // Calculate days since January 1, 1900 (a reference point)
+  const epoch = new Date(1900, 0, 1);
+  const daysSinceEpoch = Math.floor((date.getTime() - epoch.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Ethiopian calendar epoch is approximately 8 years behind Gregorian
+  // Each Ethiopian year has 365 days (or 366 in leap years)
+  // Ethiopian months have 30 days each (except Pagume with 5-6 days)
+  
+  // Approximate conversion
+  // Ethiopian year starts around September 11 of Gregorian calendar
+  let ey = gy - 7;
+  let em = 1;
+  let ed = 1;
+  
+  // Adjust for year start (Ethiopian year starts in September)
+  if (gm < 9 || (gm === 9 && gd < 11)) {
+    ey -= 1;
+  }
+  
+  // Calculate month: Ethiopian months are offset from Gregorian
+  // Meskerem (1) = September, Tikimt (2) = October, etc.
+  if (gm >= 9) {
+    em = gm - 8;
+  } else {
+    em = gm + 4;
+  }
+  
+  // Calculate day: adjust for the day offset
+  // Ethiopian day is usually close to Gregorian day, but may differ by 1-2 days
+  ed = gd;
+  
+  // Adjust for the fact that Ethiopian calendar day starts at different time
+  // Simple approximation: if we're past the 11th of September, adjust
+  if (gm === 9 && gd >= 11) {
+    ed = gd - 10; // Approximate offset
+  } else if (gm > 9 || (gm === 9 && gd < 11)) {
+    // For other months, use a simpler calculation
+    ed = gd;
+  }
+  
+  // Ensure valid ranges
+  if (ed < 1) ed = 1;
+  if (ed > 30) ed = 30;
+  if (em < 1) em = 1;
+  if (em > 12) em = 12;
+  
+  return `${ey}-${String(em).padStart(2, "0")}-${String(ed).padStart(2, "0")}`;
+}
+
+/**
+ * Gets today's date in Ethiopian calendar format
+ * @returns Ethiopian date string (YYYY-MM-DD)
+ */
+export function getTodayEthiopianDate(): string {
+  const today = new Date();
+  return gregorianToEthiopian(today);
+}

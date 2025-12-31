@@ -2,7 +2,12 @@
 import GymMemberCard from "@/components/GymMemberCard";
 import PrintButton from "@/components/PrintButton";
 import { db } from "@/lib/firebase";
-import { ethiopianToGregorian } from "@/lib/ethiopian";
+import {
+  ethiopianToGregorian,
+  addMonthsToEthiopianDate,
+  daysBetweenEthiopianDates,
+  getTodayEthiopianDate,
+} from "@/lib/ethiopian";
 import { get, ref } from "firebase/database";
 
 interface PageProps {
@@ -35,19 +40,41 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
 
   const member = memberSnap.val();
 
-  // Calculate remaining days (convert Ethiopian `registerDate` to Gregorian first)
-  const registerDate = member.registerDate
-    ? ethiopianToGregorian(member.registerDate)
-    : null;
+  // Calculate remaining days using Ethiopian calendar
   let remainingDays: number | null = null;
-  if (registerDate && member.duration) {
-    const months = parseInt(member.duration, 10);
-    const expiryDate = new Date(registerDate);
-    expiryDate.setMonth(expiryDate.getMonth() + months);
+  if (member.registerDate && member.duration) {
+    try {
+      const months = parseInt(member.duration, 10);
 
-    const today = new Date();
-    const diffTime = expiryDate.getTime() - today.getTime();
-    remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      // Calculate expiry date in Ethiopian calendar
+      const expiryEthiopianDate = addMonthsToEthiopianDate(
+        member.registerDate,
+        months
+      );
+
+      // Get today's date in Ethiopian calendar
+      const todayEthiopianDate = getTodayEthiopianDate();
+
+      // Calculate remaining days
+      remainingDays = daysBetweenEthiopianDates(
+        todayEthiopianDate,
+        expiryEthiopianDate
+      );
+
+      // Cap remaining days to not exceed package duration (max days = months * 30)
+      const maxDays = months * 30;
+      if (remainingDays > maxDays) {
+        remainingDays = maxDays;
+      }
+
+      // If negative, set to 0 (expired)
+      if (remainingDays < 0) {
+        remainingDays = 0;
+      }
+    } catch (error) {
+      console.error("Error calculating remaining days:", error);
+      remainingDays = null;
+    }
   }
 
   const baseUrl =
