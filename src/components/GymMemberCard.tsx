@@ -121,9 +121,7 @@ export default function GymMemberCard({
                 {remainingDays === null ? (
                   <span className="remaining-text">N/A</span>
                 ) : remainingDays > 0 ? (
-                  <span className={`remaining-text ${remainingDays <= 5 ? "remaining-warning" : "remaining-active"}`}>
-                    {remainingDays} {remainingDays === 1 ? "day" : "days"} left
-                  </span>
+                  <span className="remaining-text remaining-active">{remainingDays} {remainingDays === 1 ? "day" : "days"} left</span>
                 ) : (
                   <span className="remaining-text remaining-expired">EXPIRED</span>
                 )}
@@ -247,14 +245,6 @@ export default function GymMemberCard({
 
         .remaining-active {
           color: #2d5016;
-        }
-
-        .remaining-warning {
-          color: #ffffff;
-          background: #dc2626;
-          padding: 4px 12px;
-          border-radius: 4px;
-          font-weight: 700;
         }
 
         .remaining-expired {
