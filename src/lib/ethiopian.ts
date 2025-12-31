@@ -42,6 +42,43 @@ export function parseEthiopianDateToIso(ethiopianDate: string): string {
   return d.toISOString();
 }
 
+/**
+ * Parses duration string to days
+ * Examples: "1 Month" → 30, "2 Weeks" → 14, "30 Days" → 30, "1 Year" → 365
+ * @param duration - Duration string (e.g., "1 Month", "2 Weeks", "30 Days", "1 Year")
+ * @returns Number of days
+ */
+export function parseDurationToDays(duration: string): number {
+  if (!duration) return 0;
+  
+  const normalized = duration.trim().toLowerCase();
+  
+  // Extract number and unit
+  const match = normalized.match(/(\d+)\s*(month|months|week|weeks|day|days|year|years)/);
+  
+  if (!match) {
+    // Try to parse as just a number (assume days)
+    const num = parseInt(duration, 10);
+    return isNaN(num) ? 0 : num;
+  }
+  
+  const value = parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+  
+  // Convert to days
+  if (unit.startsWith("year")) {
+    return value * 365;
+  } else if (unit.startsWith("month")) {
+    return value * 30; // Ethiopian months have 30 days
+  } else if (unit.startsWith("week")) {
+    return value * 7;
+  } else if (unit.startsWith("day")) {
+    return value;
+  }
+  
+  return 0;
+}
+
 // Ethiopian month names
 const ETHIOPIAN_MONTHS = [
   "መስከረም", // 1 - Meskerem

@@ -2,12 +2,7 @@
 import GymMemberCard from "@/components/GymMemberCard";
 import PrintButton from "@/components/PrintButton";
 import { db } from "@/lib/firebase";
-import {
-  ethiopianToGregorian,
-  addMonthsToEthiopianDate,
-  daysBetweenEthiopianDates,
-  getTodayEthiopianDate,
-} from "@/lib/ethiopian";
+import { ethiopianToGregorian, parseDurationToDays } from "@/lib/ethiopian";
 import { get, ref } from "firebase/database";
 
 interface PageProps {
@@ -40,36 +35,33 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
 
   const member = memberSnap.val();
 
-  // Calculate remaining days using Ethiopian calendar
+  // Calculate remaining days using the formula:
+  // Remaining Days = (Register Date + Duration Days) - Today
   let remainingDays: number | null = null;
   if (member.registerDate && member.duration) {
     try {
-      const months = parseInt(member.duration, 10);
+      // Step 1: Convert Ethiopian registerDate to Gregorian
+      const registerDateGregorian = ethiopianToGregorian(member.registerDate);
 
-      // Calculate expiry date in Ethiopian calendar
-      const expiryEthiopianDate = addMonthsToEthiopianDate(
-        member.registerDate,
-        months
-      );
+      // Step 2: Parse duration string to days
+      // Examples: "1 Month" → 30, "2 Weeks" → 14, "30 Days" → 30, "1 Year" → 365
+      const durationDays = parseDurationToDays(member.duration);
 
-      // Get today's date in Ethiopian calendar
-      const todayEthiopianDate = getTodayEthiopianDate();
+      // Step 3: Calculate expiry date (Register Date + Duration Days)
+      const expiryDate = new Date(registerDateGregorian);
+      expiryDate.setDate(expiryDate.getDate() + durationDays);
 
-      // Calculate remaining days
-      remainingDays = daysBetweenEthiopianDates(
-        todayEthiopianDate,
-        expiryEthiopianDate
-      );
+      // Step 4: Calculate remaining days (Expiry Date - Today)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset to start of day
+      expiryDate.setHours(0, 0, 0, 0); // Reset to start of day
 
-      // Cap remaining days to not exceed package duration (max days = months * 30)
-      const maxDays = months * 30;
-      if (remainingDays > maxDays) {
-        remainingDays = maxDays;
-      }
+      const diffTime = expiryDate.getTime() - today.getTime();
+      remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      // If negative, set to 0 (expired)
+      // If negative or zero, it's expired
       if (remainingDays < 0) {
-        remainingDays = 0;
+        remainingDays = 0; // Expired
       }
     } catch (error) {
       console.error("Error calculating remaining days:", error);
