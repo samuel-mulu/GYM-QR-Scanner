@@ -134,65 +134,129 @@ export function daysBetweenEthiopianDates(startDate: string, endDate: string): n
 }
 
 /**
- * Converts Gregorian date to Ethiopian date
- * Uses the standard conversion algorithm
+ * Checks if a Gregorian year is a leap year
+ */
+function isGregorianLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+}
+
+/**
+ * Converts Gregorian date to Ethiopian date using accurate algorithm
+ * Ethiopian New Year is on September 11 (or 12 in leap years)
  * @param date - Gregorian Date object
  * @returns Ethiopian date string (YYYY-MM-DD)
  */
 export function gregorianToEthiopian(date: Date): string {
   const gy = date.getFullYear();
-  const gm = date.getMonth() + 1; // JS months are 1-based now
+  const gm = date.getMonth() + 1; // JS months are 1-based
   const gd = date.getDate();
   
-  // Calculate days since epoch (January 1, 0001 AD in Gregorian)
-  // Using a simpler approach: calculate days since a known reference point
-  // Reference: September 11, 2023 (Gregorian) = Meskerem 1, 2016 (Ethiopian)
-  
-  // Calculate days since January 1, 1900 (a reference point)
-  const epoch = new Date(1900, 0, 1);
-  const daysSinceEpoch = Math.floor((date.getTime() - epoch.getTime()) / (1000 * 60 * 60 * 24));
-  
-  // Ethiopian calendar epoch is approximately 8 years behind Gregorian
-  // Each Ethiopian year has 365 days (or 366 in leap years)
-  // Ethiopian months have 30 days each (except Pagume with 5-6 days)
-  
-  // Approximate conversion
-  // Ethiopian year starts around September 11 of Gregorian calendar
+  // Ethiopian year offset: Ethiopian year = Gregorian year - 7 (or 8 before New Year)
   let ey = gy - 7;
-  let em = 1;
-  let ed = 1;
   
-  // Adjust for year start (Ethiopian year starts in September)
-  if (gm < 9 || (gm === 9 && gd < 11)) {
+  // Determine if we're before or after Ethiopian New Year
+  // Ethiopian New Year is September 11 (or 12 in leap years)
+  const isLeap = isGregorianLeapYear(gy);
+  const newYearDay = isLeap ? 12 : 11;
+  
+  // If before September 11/12, we're in the previous Ethiopian year
+  if (gm < 9 || (gm === 9 && gd < newYearDay)) {
     ey -= 1;
   }
   
-  // Calculate month: Ethiopian months are offset from Gregorian
-  // Meskerem (1) = September, Tikimt (2) = October, etc.
+  // Calculate Ethiopian month and day
+  let em: number;
+  let ed: number;
+  
+  // Days in each Gregorian month up to August
+  const daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (isLeap) daysInMonths[1] = 29; // February in leap year
+  
   if (gm >= 9) {
-    em = gm - 8;
+    // From September onwards
+    // Calculate days from September 11/12
+    let daysFromNewYear = 0;
+    
+    if (gm === 9) {
+      // September: days from new year day (including the new year day itself)
+      daysFromNewYear = gd - newYearDay + 1;
+    } else {
+      // October onwards: days in September after new year + days in subsequent months
+      daysFromNewYear = daysInMonths[8] - newYearDay + 1; // Days left in September
+      for (let m = 10; m < gm; m++) {
+        daysFromNewYear += daysInMonths[m - 1];
+      }
+      daysFromNewYear += gd;
+    }
+    
+    // Convert to Ethiopian month and day
+    // Each Ethiopian month has 30 days
+    // Adjust: if daysFromNewYear is 0, it's day 1 of month 1
+    if (daysFromNewYear <= 0) {
+      em = 1;
+      ed = 1;
+    } else {
+      em = Math.floor((daysFromNewYear - 1) / 30) + 1;
+      ed = ((daysFromNewYear - 1) % 30) + 1;
+    }
+    
+    // Handle Pagume (month 13) - has 5 or 6 days
+    if (em > 13) {
+      em = 13;
+      ed = Math.min(ed, isLeap ? 6 : 5);
+    }
   } else {
-    em = gm + 4;
-  }
-  
-  // Calculate day: adjust for the day offset
-  // Ethiopian day is usually close to Gregorian day, but may differ by 1-2 days
-  ed = gd;
-  
-  // Adjust for the fact that Ethiopian calendar day starts at different time
-  // Simple approximation: if we're past the 11th of September, adjust
-  if (gm === 9 && gd >= 11) {
-    ed = gd - 10; // Approximate offset
-  } else if (gm > 9 || (gm === 9 && gd < 11)) {
-    // For other months, use a simpler calculation
-    ed = gd;
+    // January to August (before Ethiopian New Year)
+    // Calculate days from previous Ethiopian New Year
+    const prevYearIsLeap = isGregorianLeapYear(gy - 1);
+    const prevNewYearDay = prevYearIsLeap ? 12 : 11;
+    
+    let daysFromNewYear = daysInMonths[8] - prevNewYearDay + 1; // Days left in previous September
+    for (let m = 10; m <= 12; m++) {
+      daysFromNewYear += daysInMonths[m - 1]; // October, November, December
+    }
+    for (let m = 1; m < gm; m++) {
+      daysFromNewYear += daysInMonths[m - 1]; // January to current month
+    }
+    daysFromNewYear += gd;
+    
+    // Convert to Ethiopian month and day
+    if (daysFromNewYear <= 0) {
+      em = 1;
+      ed = 1;
+    } else {
+      em = Math.floor((daysFromNewYear - 1) / 30) + 1;
+      ed = ((daysFromNewYear - 1) % 30) + 1;
+    }
+    
+    // Handle Pagume
+    if (em > 13) {
+      em = 13;
+      ed = Math.min(ed, prevYearIsLeap ? 6 : 5);
+    }
   }
   
   // Ensure valid ranges
-  if (ed < 1) ed = 1;
-  if (ed > 30) ed = 30;
   if (em < 1) em = 1;
-  if (em > 12) em = 12;
+  if (em > 13) em = 13;
+  
+  // Day validation
+  if (em === 13) {
+    // Pagume has 5 or 6 days
+    const yearIsLeap = isEthiopianLeapYear(ey);
+    const maxDays = yearIsLeap ? 6 : 5;
+    if (ed > maxDays) ed = maxDays;
+  } else {
+    // Regular months have 30 days
+    if (ed > 30) ed = 30;
+  }
+  if (ed < 1) ed = 1;
+  
+  // Format month (13 for Pagume, but we'll use 12 for display purposes in our system)
+  // Since our system uses 1-12, we'll map Pagume to month 12
+  if (em === 13) {
+    em = 12;
+  }
   
   return `${ey}-${String(em).padStart(2, "0")}-${String(ed).padStart(2, "0")}`;
 }
